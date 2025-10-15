@@ -1,0 +1,230 @@
+:root {
+  --bg: #f5f5f5;
+  --panel: #f5f5f5;
+  --ink: #e5e7eb;
+  --muted: #616161;
+  --accent: #22d3ee;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
+  background: var(--bg);
+  color: var(--ink);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f5f5f5;
+  position: static;
+}
+
+header h1 {
+  font-size: 14px;
+  margin: 0;
+  color: #1d1d1d;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+header .btn {
+  background: #111827;
+  border: 1px solid #1f2937;
+  color: #e5e7eb;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+header .btn.info {
+  background: #50a5f1;
+  border: none;
+  color: #f5f5f5;
+}
+
+header .btn:hover {
+  border-color: #334155;
+}
+
+header .btn.info:hover {
+  border-color: #4084c0;
+}
+
+header .left,
+header .right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wrap {
+  display: flex;
+  height: calc(100% - 54px);
+  padding: 10px;
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.panel header {
+  background: rgb(244, 244, 244) !important;
+  border-bottom: 1px solid #c9c9c9;
+  padding: 0.5rem 0.75rem;
+  position: static;
+}
+
+.panel header h2 {
+  font-size: 12px;
+  margin: 0;
+  color: #3a3a3a;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+textarea,
+input[type="text"] {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  background: #f9f9f9;
+  color: #2c2c2c;
+  border: 0;
+  outline: none;
+  padding: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  line-height: 1.5;
+}
+
+.preview {
+  grid-row: 1 / span 2;
+  grid-column: 2 / 3;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: white;
+}
+
+.console {
+  height: 180px;
+  overflow: auto;
+  background: #f5f5f5;
+  border-top: 1px solid #c9c9c9;
+  padding: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.log {
+  color: #1a1a1a;
+}
+
+.warn {
+  color: #fbbf24;
+}
+
+.error {
+  color: #f87171;
+  white-space: pre-wrap;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px dashed #c9c9c9;
+}
+
+.row label {
+  font-size: 12px;
+  color: var(--muted);
+  width: 7em;
+}
+
+.editor {
+  display: flex;
+  height: 100%;
+}
+
+.gutter {
+  margin: 0;
+  padding: 8px 8px 8px 12px;
+  width: 3.5ch; /* 자리수에 맞춰 조절 */
+  background: #f8fafc;
+  color: #64748b;
+  text-align: right;
+  user-select: none;
+  line-height: var(--lh);
+  height: var(--height);
+  overflow: hidden; /* 스크롤은 textarea에 맞춰 동기화 */
+  border-right: 1px solid #e2e8f0;
+  font: 14px var(--font);
+  white-space: pre; /* 줄바꿈 그대로 */
+}
+/* 텍스트영역 */
+.text-area {
+  border: 0;
+  outline: 0;
+  resize: none;
+  padding: 8px 12px;
+  line-height: var(--lh);
+  height: var(--height);
+  overflow: auto;
+  font: 14px var(--font);
+  white-space: pre; /* 줄바꿈 off일 때 가로 스크롤 허용 */
+}
+
+@media (max-width: 1024px) {
+  .preview {
+    grid-row: auto;
+    grid-column: auto;
+    height: 50vh;
+  }
+}
+
+/* grid-stack */
+.grid-item-header {
+}
+.grid-stack-item {
+  background: transparent;
+}
+.grid-stack-item-content {
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+.grid-item-header {
+  cursor: crosshair;
+}
+.CodeMirror {
+  width: 100%;
+}
