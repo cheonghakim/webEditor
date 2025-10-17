@@ -61,6 +61,25 @@ export class LayoutManager {
       minH: 1,
       minW: 2,
     },
+    itemE: {
+      id: "itemE",
+      content: ` 
+          <div class="panel">
+            <header class="grid-item-header">
+              <h2>Rust</h2>
+            </header>
+            <div class="editor grid-item-body">
+              <!-- <pre class="gutter">1</pre> -->
+              <textarea id="rust" class="text-area" spellcheck="false"></textarea>
+            </div>
+          </div>`,
+      x: 0,
+      y: 6,
+      w: 6,
+      h: 2,
+      minH: 1,
+      minW: 2,
+    },
     itemD: {
       id: "itemD",
       content: `  

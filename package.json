@@ -1,0 +1,16 @@
+{
+  "name": "web-editor",
+  "version": "0.0.1",
+  "description": "code editor",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "CheonghaKim",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "express": "^5.1.0",
+    "url": "^0.11.4"
+  }
+}

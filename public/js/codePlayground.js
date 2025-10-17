@@ -1,11 +1,12 @@
 export class CodePlayground {
   // Persist editors in localStorage
   static KEY = "mini-playground-v1";
-  constructor({ meta = "", title = "", html, css, js }) {
+  constructor({ meta = "", title = "", html, css, js, rust = "" }) {
     this.initCode = {
       html,
       css,
       js,
+      rust,
     };
 
     this.debounce = null;
@@ -18,12 +19,16 @@ export class CodePlayground {
     this.cssCode = null;
     this.htmlCode = null;
 
+    let reqId = 0;
+    this.compileTime = null;
+
     // Libraries list (CDN scripts)
 
     this.els = {
       html: null,
       css: null,
       js: null,
+      rust: null,
       frame: document.getElementById("frame"),
       log: document.getElementById("console"),
       runBtn: document.getElementById("runBtn"),
@@ -125,6 +130,7 @@ export class CodePlayground {
     this.els.js?.toTextArea?.();
     this.els.css?.toTextArea?.();
     this.els.html?.toTextArea?.();
+    this.els.rust?.toTextArea?.();
 
     // 에디터 있는지 체크
     const jsEl = document.getElementById("js");
@@ -153,16 +159,24 @@ export class CodePlayground {
       theme: "default", // 테마
       tabSize: 2, // 탭 크기
     });
+    this.els.rust = CodeMirror.fromTextArea(document.getElementById("rust"), {
+      lineNumbers: true, // 행 번호 표시
+      mode: "rust", // 언어 모드
+      theme: "default", // 테마
+      tabSize: 2, // 탭 크기
+    });
 
     // 변경시 즉시 실행 이벤트
     this.els.js.on("changes", this.scheduleRunEvt);
     this.els.css.on("changes", this.scheduleRunEvt);
     this.els.html.on("changes", this.scheduleRunEvt);
+    this.els.rust.on("changes", this.scheduleRunEvt);
 
     // 기본 코드 설정
     this.els.html.setValue(saved.html ?? this.initCode.html);
     this.els.css.setValue(saved.css ?? this.initCode.css);
     this.els.js.setValue(saved.js ?? this.initCode.js);
+    this.els.rust.setValue(saved.rust ?? this.initCode.rust);
 
     // 라이브러리 초기화
     this.libs = saved.libs ?? [];
@@ -191,6 +205,7 @@ export class CodePlayground {
     const currCssCode = this.els.css.getValue();
     const currHtmlCode = this.els.html.getValue();
     const currJsCode = this.els.js.getValue();
+
     try {
       const [formattedCss, formattedHtml, formattedJs] = await Promise.all([
         prettier.format(currCssCode, {
@@ -231,9 +246,48 @@ export class CodePlayground {
       apply(this.els.css, formattedCss);
       apply(this.els.html, formattedHtml);
       apply(this.els.js, formattedJs);
+
+      // rust 포맷
+      this.formatRust();
     } catch (error) {
       alert(error?.message ?? String(error));
     }
+  }
+
+  async formatRust() {
+    try {
+      const src = this.els.rust.getValue();
+      const res = await fetch("/format", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: src }),
+      });
+      const { formatted } = await res.json();
+      this.els.rust.setValue(formatted);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async compileAndLoad(rustSource) {
+    const myId = ++this.reqId; // 이 호출 고유 번호
+    this.status("Compiling…");
+
+    const res = await fetch("/compile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source: rustSource }),
+    });
+    const j = await res.json();
+    if (myId !== this.reqId) return; // 더 최신 요청이 있으면 무시
+    if (!j.ok) throw new Error(j.error || "Compile failed");
+
+    this.status("Done");
+    return j;
+  }
+
+  status(msg) {
+    document.getElementById("status").textContent = msg;
   }
 
   // Simple debounce live-run
@@ -245,18 +299,85 @@ export class CodePlayground {
   }
 
   // Capture console via postMessage
-  makePreviewHTML(html, css, js, externalScripts) {
-    const esc = (s) => s.replace(/<\/(script)/gi, "<\\/$1");
-    const libs = externalScripts
+  makePreviewHTML(html, css, js, rust, externalScripts = []) {
+    const esc = (s) => (s || "").replace(/<\/(script)/gi, "<\\/$1");
+
+    // externalScripts가 문자열/undefined로 오더라도 안전 처리
+    const libs = (
+      Array.isArray(externalScripts) ? externalScripts : [externalScripts]
+    )
+      .filter(Boolean)
       .map((src) => `<script src="${src}"><\/script>`)
       .join("\n");
-    return `<!doctype html>\n<html><head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta       itemprop="description" content="${
-      this.meta
-    }" />\n<title>${
-      this.title
-    }</title>\n<style>${css}</style>\n${libs}\n</head>\n<body>\n${html}\n<script>\n(function(){\n  function send(type, args){\n    parent.postMessage({__mini:true, type, args: Array.from(args).map(String)}, '*');\n  }\n  ['log','info','warn','error'].forEach(k=>{\n    const orig = console[k].bind(console);\n    console[k] = function(){ send(k, arguments); orig.apply(console, arguments); };\n  });\n  window.addEventListener('error', e=>{\n    parent.postMessage({__mini:true, type:'error', args:[(e.message||'Error')+'\\n'+(e.filename||'')+':'+(e.lineno||'')+'\\n'+(e.error && e.error.stack || '')]}, '*');\n  });\n})();\n<\/script>\n<script>\n${esc(
-      js
-    )}\n<\/script>\n</body></html>`;
+
+    // rust 인자는 다음 형태를 기대:
+    //   - falsy: Rust 없음
+    //   - { baseUrl: "/artifact/<hash>", exposeAs?: "__rust", initName?: "init" }
+    //      -> <script type="module">에서 import init, * as m ... 하고 window[exposeAs]=m
+    const rustModuleBlock = (() => {
+      if (!rust || !rust.baseUrl) return "";
+      const exposeAs = rust.exposeAs || "__rust"; // window.__rust.run(...) 으로 접근
+      const initName = rust.initName || "init"; // wasm-pack 기본 init
+      const modUrl = `${rust.baseUrl}/hello_wasm.js?v=${Date.now()}`;
+      const wasmUrl = `${rust.baseUrl}/hello_wasm_bg.wasm?v=${Date.now()}`;
+
+      console.log(modUrl, wasmUrl);
+      return `
+  <script type="module">
+    try {
+      const m = await import("${modUrl}");
+      // 명시적으로 wasm 파일 전달 (대부분 init()만으로도 OK지만 캐시 버스트 겸)
+      if (m.${initName}) {
+        await m.${initName}(new URL("${wasmUrl}", window.location.href));
+      }
+      // JS 스크립트에서 쉽게 쓰도록 window에 노출
+      window["${exposeAs}"] = m;
+    } catch (e) {
+      console.error(e);
+      document.body.insertAdjacentHTML('beforeend',
+        '<pre style="color:#f55">'+ String(e).replace(/[&<>]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[s])) +'</pre>');
+    }
+  <\/script>`;
+    })();
+
+    return `<!doctype html>
+  <html>
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta itemprop="description" content="${this.meta}" />
+  <title>${this.title}</title>
+  <style>${css || ""}</style>
+  ${libs}
+  </head>
+  <body>
+  ${html || ""}
+  
+  <!-- 콘솔/에러 브리지 -->
+  <script>
+  (function(){
+    function send(type, args){
+      parent.postMessage({__mini:true, type, args: Array.from(args).map(String)}, '*');
+    }
+    ['log','info','warn','error'].forEach(k=>{
+      const orig = console[k] && console[k].bind(console) || function(){};
+      console[k] = function(){ send(k, arguments); try{ orig.apply(console, arguments); }catch(_){ } };
+    });
+    window.addEventListener('error', e=>{
+      parent.postMessage({__mini:true, type:'error',
+        args:[(e.message||'Error')+'\\n'+(e.filename||'')+':'+(e.lineno||'')+'\\n'+(e.error && e.error.stack || '')]}, '*');
+    });
+  })();
+  <\/script>
+  
+  ${rustModuleBlock}
+  
+  <!-- 사용자가 작성한 JS (window.__rust 노출 이후 실행되므로, 여기서 __rust.run(...) 가능) -->
+  <script>
+  ${esc(js)}
+  <\/script>
+  
+  </body></html>`;
   }
 
   clearConsole() {
@@ -271,23 +392,30 @@ export class CodePlayground {
     this.els.log.scrollTop = this.els.log.scrollHeight;
   }
 
-  run() {
+  async run() {
     this.saveState({
       html: this.els.html.getValue(),
       css: this.els.css.getValue(),
       js: this.els.js.getValue(),
+      rust: this.els.rust.getValue(),
       libs: this.libs,
     });
     this.clearConsole();
-    const html = this.makePreviewHTML(
-      this.els.html.getValue(),
-      this.els.css.getValue(),
-      this.els.js.getValue(),
-      this.libs
-    );
-    // Use srcdoc for simplicity
-    this.els.frame.srcdoc = html;
-    this.updateStatus("Running");
+
+    clearTimeout(this.compileTime);
+    this.compileTime = setTimeout(async () => {
+      const rustRes = await this.compileAndLoad(this.els.rust.getValue());
+      const html = this.makePreviewHTML(
+        this.els.html.getValue(),
+        this.els.css.getValue(),
+        this.els.js.getValue(),
+        rustRes,
+        this.libs
+      );
+      // Use srcdoc for simplicity
+      this.els.frame.srcdoc = html;
+      this.updateStatus("Running");
+    }, 400);
   }
 
   reset() {
