@@ -146,18 +146,22 @@ export class CodePlayground {
       mode: "javascript", // 언어 모드
       theme: "default", // 테마
       tabSize: 2, // 탭 크기
+      autoCloseBrackets: true,
     });
     this.els.css = CodeMirror.fromTextArea(document.getElementById("css"), {
       lineNumbers: true, // 행 번호 표시
       mode: "css", // 언어 모드
       theme: "default", // 테마
       tabSize: 2, // 탭 크기
+      autoCloseBrackets: true,
     });
     this.els.html = CodeMirror.fromTextArea(document.getElementById("html"), {
       lineNumbers: true, // 행 번호 표시
       mode: "htmlmixed", // 언어 모드
       theme: "default", // 테마
       tabSize: 2, // 탭 크기
+      autoCloseBrackets: true,
+      autoCloseTags: true,
     });
     this.els.rust = CodeMirror.fromTextArea(document.getElementById("rust"), {
       lineNumbers: true, // 행 번호 표시
