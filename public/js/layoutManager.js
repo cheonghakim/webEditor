@@ -46,8 +46,8 @@ export class LayoutManager {
   `,
       x: 0,
       y: 0,
-      w: 6,
-      h: 5,
+      w: 12,
+      h: 11,
       minH: 3,
       minW: 3,
     },
@@ -65,10 +65,10 @@ export class LayoutManager {
             ></iframe>
             <div class="console" id="console"></div>
           </div>`,
-      x: 6,
+      x: 13,
       y: 0,
-      w: 6,
-      h: 5,
+      w: 12,
+      h: 11,
       minH: 3,
       minW: 3,
     },
@@ -78,7 +78,7 @@ export class LayoutManager {
     this.config = {
       float: false,
       margin: 2,
-      column: 12,
+      column: 24,
       handle: ".grid-item-header",
       draggable: {
         handle: ".grid-item-header",
