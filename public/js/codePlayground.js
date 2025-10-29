@@ -19,7 +19,7 @@ export class CodePlayground {
     this.cssCode = null;
     this.htmlCode = null;
 
-    let reqId = 0;
+    this.reqId = 0;
     this.compileTime = null;
 
     // Libraries list (CDN scripts)
@@ -281,7 +281,6 @@ export class CodePlayground {
     const j = await res.json();
     if (myId !== this.reqId) return; // 더 최신 요청이 있으면 무시
     if (!j.ok) throw new Error(j.error || "Compile failed");
-
     this.status("Done");
     return j;
   }
@@ -317,27 +316,42 @@ export class CodePlayground {
     const rustModuleBlock = (() => {
       if (!rust || !rust.baseUrl) return "";
       const exposeAs = rust.exposeAs || "__rust"; // window.__rust.run(...) 으로 접근
-      const initName = rust.initName || "init"; // wasm-pack 기본 init
+      const initName = rust.initName || "default"; // 기본은 default로 간주
       const modUrl = `${rust.baseUrl}/hello_wasm.js?v=${Date.now()}`;
       const wasmUrl = `${rust.baseUrl}/hello_wasm_bg.wasm?v=${Date.now()}`;
+      const res = `
+    
+        try {
+          // 전역 Promise로 준비 상태 노출
+          window["${exposeAs}"] = (async () => {
+            const m = await import("${modUrl}");
 
-      console.log(modUrl, wasmUrl);
-      return `
-  <script type="module">
-    try {
-      const m = await import("${modUrl}");
-      // 명시적으로 wasm 파일 전달 (대부분 init()만으로도 OK지만 캐시 버스트 겸)
-      if (m.${initName}) {
-        await m.${initName}(new URL("${wasmUrl}", window.location.href));
-      }
-      // JS 스크립트에서 쉽게 쓰도록 window에 노출
-      window["${exposeAs}"] = m;
-    } catch (e) {
-      console.error(e);
-      document.body.insertAdjacentHTML('beforeend',
-        '<pre style="color:#f55">'+ String(e).replace(/[&<>]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[s])) +'</pre>');
-    }
-  <\/script>`;
+            // init 함수 찾기 (default → init → 지정명)
+            const __init =
+              (m["${initName}"] && typeof m["${initName}"] === "function")
+                ? m["${initName}"]
+                : (typeof m.default === "function" ? m.default : m.init);
+
+            if (typeof __init === "function") {
+              try { await __init(); }
+              catch { await __init(new URL("${wasmUrl}", window.location.href)); }
+            }
+
+            // 초기화 끝난 실제 모듈을 전역에 보관해도 좋고…
+            window["${exposeAs}"] = m;
+            console.log("call: ", m);
+            return m;
+          })();
+        } catch (e) {
+          console.error(e);
+          document.body.insertAdjacentHTML(
+            "beforeend",
+            '<pre style="color:#f55">'+ String(e).replace(/[&<>]/g, s => ({'&':'&amp;','<':'&gt;','>':'&gt;'}[s])) +'</pre>'
+          );
+        }
+
+      `
+      return res;
     })();
 
     return `<!doctype html>
@@ -354,27 +368,93 @@ export class CodePlayground {
   ${html || ""}
   
   <!-- 콘솔/에러 브리지 -->
-  <script>
-  (function(){
-    function send(type, args){
-      parent.postMessage({__mini:true, type, args: Array.from(args).map(String)}, '*');
+  <script >
+(function(){
+  function safeToString(v) {
+    if (v === null) return "null";
+    const t = typeof v;
+    if (t === "string" || t === "number" || t === "boolean") return String(v);
+    if (t === "undefined") return "undefined";
+    if (t === "symbol") {
+      try { return v.toString(); } catch(_) { return "Symbol"; }
     }
-    ['log','info','warn','error'].forEach(k=>{
-      const orig = console[k] && console[k].bind(console) || function(){};
-      console[k] = function(){ send(k, arguments); try{ orig.apply(console, arguments); }catch(_){ } };
-    });
-    window.addEventListener('error', e=>{
-      parent.postMessage({__mini:true, type:'error',
-        args:[(e.message||'Error')+'\\n'+(e.filename||'')+':'+(e.lineno||'')+'\\n'+(e.error && e.error.stack || '')]}, '*');
-    });
-  })();
+    if (t === "bigint") {
+      try { return v.toString() + "n"; } catch(_) { return "bigint"; }
+    }
+    if (t === "function") return "[Function" + (v.name ? " " + v.name : "") + "]";
+    if (v instanceof Error) return v.stack || v.message || String(v);
+
+    // 객체 계열 — JSON으로 직렬화하되 순환참조 처리
+    try {
+      const seen = new WeakSet();
+      return JSON.stringify(v, function (_k, val) {
+        if (val && typeof val === "object") {
+          if (seen.has(val)) return "[Circular]";
+          seen.add(val);
+        }
+        if (typeof val === "function") return "[Function" + (val.name ? " " + val.name : "") + "]";
+        if (typeof val === "symbol") {
+          try { return val.toString(); } catch (_) { return "Symbol"; }
+        }
+        if (typeof val === "bigint") {
+          try { return val.toString() + "n"; } catch (_) { return "bigint"; }
+        }
+        return val;
+      });
+    } catch (_) {
+      // 최후 폴백: toString 혹은 Object.prototype.toString
+      try { return String(v); } catch (_) { return Object.prototype.toString.call(v); }
+    }
+  }
+
+  function send(type, args){
+    // args는 arguments 같은 유사 배열일 수 있음
+    try {
+      const arr = Array.from(args).map(safeToString);
+      // postMessage도 실패할 수 있으니 보호
+      try {
+        parent.postMessage({ __mini: true, type, args: arr }, '*');
+      } catch (postErr) {
+        // 실패해도 아무 것도 하지 않음(또는 내부 로깅)
+        // console은 이미 덮어씌워져 있을 수 있으므로 원래 콘솔에 접근하지 않음
+      }
+    } catch (e) {
+      // 안전망: 절대 예외를 던지지 않게 함
+    }
+  }
+
+  ['log','info','warn','error'].forEach(k=>{
+    const orig = (typeof console !== 'undefined' && console[k] && console[k].bind(console)) || function(){};
+    console[k] = function(){
+      // 1) 안전하게 부모로 전송 (절대 예외 발생 금지)
+      try { send(k, arguments); } catch(_) {}
+      // 2) 원래 콘솔 동작은 반드시 시도
+      try { return orig.apply(console, arguments); } catch(_) { /* swallow */ }
+    };
+  });
+
+  window.addEventListener('error', e=>{
+    try {
+      const message = (e && (e.message || (e.error && e.error.message))) || 'Error';
+      const filename = (e && (e.filename || '')) || '';
+      const lineno = (e && (e.lineno || '')) || '';
+      const stack = (e && e.error && e.error.stack) ? e.error.stack : '';
+      const payload = message + '\\n' + filename + ':' + lineno + '\\n' + stack;
+      try { parent.postMessage({ __mini:true, type:'error', args:[payload] }, '*'); } catch(_) {}
+    } catch (_) {}
+  });
+})();
   <\/script>
   
-  ${rustModuleBlock}
+
   
   <!-- 사용자가 작성한 JS (window.__rust 노출 이후 실행되므로, 여기서 __rust.run(...) 가능) -->
-  <script>
-  ${esc(js)}
+  <script type="module">
+   (async () => {
+      ${rustModuleBlock}
+      ${esc(js)}
+    })();
+
   <\/script>
   
   </body></html>`;
@@ -413,7 +493,9 @@ export class CodePlayground {
         this.libs
       );
       // Use srcdoc for simplicity
-      this.els.frame.srcdoc = html;
+      const r = await fetch("/preview", { method: "POST", body: html });
+      const { id } = await r.json();
+      this.els.frame.src = `/preview/${id}`; // ← 동일 오리진
       this.updateStatus("Running");
     }, 400);
   }

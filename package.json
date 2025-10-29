@@ -11,6 +11,8 @@
   "type": "module",
   "dependencies": {
     "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "send": "^1.2.0",
     "url": "^0.11.4"
   }
 }

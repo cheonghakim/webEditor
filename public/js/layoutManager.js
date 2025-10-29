@@ -16,7 +16,7 @@ export class LayoutManager {
   `,
       x: 0,
       y: 0,
-      w: 6,
+      w: 3,
       h: 2,
       minH: 1,
       minW: 2,
@@ -73,9 +73,9 @@ export class LayoutManager {
               <textarea id="rust" class="text-area" spellcheck="false"></textarea>
             </div>
           </div>`,
-      x: 0,
-      y: 6,
-      w: 6,
+      x: 3,
+      y: 0,
+      w: 3,
       h: 2,
       minH: 1,
       minW: 2,
@@ -84,10 +84,11 @@ export class LayoutManager {
       id: "itemD",
       content: `  
           <div class="panel preview">
-            <header>
+            <header class="grid-item-header"> 
               <h2>Preview (sandboxed)</h2>
             </header>
             <iframe
+              class="grid-item-body"
               id="frame"
               sandbox="allow-scripts allow-modals allow-forms"
             ></iframe>
