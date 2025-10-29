@@ -5,47 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>웹 에디터</title>
     <link href="/css/gridstack.min.css" rel="stylesheet" />
-    <link href="/css/code-editor.css" rel="stylesheet" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/cferdinandi/tabby@12/dist/css/tabby-ui.css"
+    />
+    <link href="/css/code-editor.css" rel="stylesheet" />
   </head>
 
   <body>
-    <!-- header -->
-    <header class="header-root">
-      <div class="left">
-        <h1>Web Programming Playground</h1>
-        <button class="btn info" id="formatting" title="formatting codes">
-          Format
-        </button>
-        <button class="btn" id="runBtn" title="Run (Ctrl/Cmd+Enter)">
-          Run
-        </button>
-        <button class="btn" id="resetBtn" title="Reset editors to starter">
-          Reset
-        </button>
-
-        <span class="muted" id="status">Idle</span>
-      </div>
-
-      <div class="right">
-        <label class="muted" for="libUrl" style="width: 100%">CDN script</label>
-        <input
-          id="libUrl"
-          type="text"
-          placeholder="e.g. https://cdn.jsdelivr.net/npm/lodash-es@4/lodash.min.js"
-          style="min-width: 500px"
-        />
-        <button class="btn" id="addLib">Add</button>
-      </div>
-    </header>
-
     <!-- body -->
     <div class="wrap">
       <div class="grid-stack" id="gridItems"></div>
     </div>
+
+    <!-- Tabby.js -->
+    <script src="https://cdn.jsdelivr.net/gh/cferdinandi/tabby/dist/js/tabby.polyfills.min.js"></script>
 
     <!-- code mirror -->
     <!-- core -->

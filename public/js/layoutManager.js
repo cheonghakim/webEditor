@@ -5,87 +5,58 @@ export class LayoutManager {
       content: `
           <div class="panel">
             <header class="grid-item-header">
-              <h2>CSS</h2>
+              <div class="widget-title">WASM Playground( <span class="muted" id="status">Idle</span> ) </div>
+
+              <div class="d-flex align-items-center">
+                <input
+                id="libUrl"
+                type="text"
+                placeholder="e.g. https://cdn.jsdelivr.net/npm/lodash-es@4/lodash.min.js"
+                />
+                <button class="btn" id="addLib">Add</button>
+              </div>
+
+              <div class="d-flex align-items-center">
+                <button class="btn mini info" id="formatting" title="formatting codes">
+                  <img src="/icons/tool.svg" alt="format_button" />
+                </button>
+                <button class="btn mini" id="runBtn" title="Run (Ctrl/Cmd+Enter)">
+                  <img src="/icons/play.svg" alt="play_button" />
+                </button>
+                <button class="btn mini" id="resetBtn" title="Reset editors to starter">
+                  <img src="/icons/trash.svg" alt="reset_button" />
+                </button>              
+              </div>
             </header>
           
             <div class="editor grid-item-body">
-              <!-- <pre class="gutter">1</pre> -->
-              <textarea id="css" class="text-area" spellcheck="false"></textarea>
+              <ul id="tabs" data-tabs>
+                <li><a data-tabby-default href="#htmlCode">HTML</a></li>
+                <li><a href="#cssCode">CSS</a></li>
+                <li><a href="#jsCode">JS</a></li>
+                <li><a href="#rustCode">RUST</a></li>
+              </ul>
+
+              <div class="tab-content" id="htmlCode"><textarea id="html" class="text-area" spellcheck="false"></textarea></div>
+              <div class="tab-content" id="cssCode"><textarea id="css" class="text-area" spellcheck="false"></textarea></div>
+              <div class="tab-content" id="jsCode"><textarea id="js" class="text-area" spellcheck="false"></textarea></div>
+              <div class="tab-content" id="rustCode"><textarea id="rust" class="text-area" spellcheck="false"></textarea></div>
             </div>
           </div>
   `,
       x: 0,
       y: 0,
-      w: 3,
-      h: 2,
-      minH: 1,
-      minW: 2,
-    },
-    itemB: {
-      id: "itemB",
-      content: `
-          <div class="panel">
-            <header class="grid-item-header">
-              <h2>HTML</h2>
-            </header>
-          
-            <div class="editor grid-item-body">
-              <!-- <pre class="gutter">1</pre> -->
-              <textarea id="html" class="text-area" spellcheck="false"></textarea>
-            </div>
-          </div>
-        `,
-      x: 0,
-      y: 2,
       w: 6,
-      h: 2,
-      minH: 1,
-      minW: 2,
-    },
-    itemC: {
-      id: "itemC",
-      content: ` 
-          <div class="panel">
-            <header class="grid-item-header">
-              <h2>JavaScript</h2>
-            </header>
-            <div class="editor grid-item-body">
-              <!-- <pre class="gutter">1</pre> -->
-              <textarea id="js" class="text-area" spellcheck="false"></textarea>
-            </div>
-          </div>`,
-      x: 0,
-      y: 4,
-      w: 6,
-      h: 2,
-      minH: 1,
-      minW: 2,
-    },
-    itemE: {
-      id: "itemE",
-      content: ` 
-          <div class="panel">
-            <header class="grid-item-header">
-              <h2>Rust</h2>
-            </header>
-            <div class="editor grid-item-body">
-              <!-- <pre class="gutter">1</pre> -->
-              <textarea id="rust" class="text-area" spellcheck="false"></textarea>
-            </div>
-          </div>`,
-      x: 3,
-      y: 0,
-      w: 3,
-      h: 2,
-      minH: 1,
-      minW: 2,
+      h: 5,
+      minH: 3,
+      minW: 3,
     },
     itemD: {
       id: "itemD",
       content: `  
           <div class="panel preview">
             <header class="grid-item-header"> 
-              <h2>Preview (sandboxed)</h2>
+              <div class="widget-title">Preview (sandboxed)</div>
             </header>
             <iframe
               class="grid-item-body"
@@ -97,7 +68,7 @@ export class LayoutManager {
       x: 6,
       y: 0,
       w: 6,
-      h: 6,
+      h: 5,
       minH: 3,
       minW: 3,
     },

@@ -15,6 +15,13 @@ body {
   height: 100%;
 }
 
+.d-flex {
+  display: flex;
+}
+.align-items-center {
+  align-items: center;
+}
+
 body {
   margin: 0;
   font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
@@ -33,27 +40,17 @@ header {
   position: static;
 }
 
-header h1 {
-  font-size: 14px;
-  margin: 0;
-  color: #1d1d1d;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-}
-
 header .btn {
-  background: #111827;
-  border: 1px solid #1f2937;
-  color: #e5e7eb;
-  padding: 0.45rem 0.75rem;
+  background: transparent;
+  border: none;
+  color: #242424;
+  padding: 0.25rem 0.25rem;
   border-radius: 0.5rem;
   cursor: pointer;
 }
 
 header .btn.info {
-  background: #50a5f1;
-  border: none;
-  color: #f5f5f5;
+  color: #50a5f1;
 }
 
 header .btn:hover {
@@ -61,7 +58,20 @@ header .btn:hover {
 }
 
 header .btn.info:hover {
-  border-color: #4084c0;
+  color: #4084c0;
+}
+
+.btn.mini {
+  margin: 0rem 0.24rem;
+}
+
+.btn.mini img {
+  width: 14px;
+  height: 14px;
+  border: none;
+  vertical-align: middle;
+  overflow-clip-margin: content-box;
+  overflow: clip;
 }
 
 header .left,
@@ -85,6 +95,7 @@ header .right {
   overflow: hidden;
   height: 100%;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #dddddd;
 }
 
 .panel header {
@@ -94,12 +105,13 @@ header .right {
   position: static;
 }
 
-.panel header h2 {
+.panel header .widget-title {
   font-size: 12px;
   margin: 0;
   color: #3a3a3a;
   text-transform: uppercase;
   letter-spacing: 0.12em;
+  font-weight: 600;
 }
 
 textarea,
@@ -115,6 +127,18 @@ input[type="text"] {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
   line-height: 1.5;
+}
+
+#libUrl {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  min-width: 456px;
+  line-height: 1;
+  padding: 0.24rem;
 }
 
 .preview {
@@ -174,21 +198,11 @@ iframe {
   height: 100%;
 }
 
-.gutter {
-  margin: 0;
-  padding: 8px 8px 8px 12px;
-  width: 3.5ch; /* 자리수에 맞춰 조절 */
-  background: #f8fafc;
-  color: #64748b;
-  text-align: right;
-  user-select: none;
-  line-height: var(--lh);
-  height: var(--height);
-  overflow: hidden; /* 스크롤은 textarea에 맞춰 동기화 */
-  border-right: 1px solid #e2e8f0;
-  font: 14px var(--font);
-  white-space: pre; /* 줄바꿈 그대로 */
+.tab-content {
+  padding: 0px !important;
+  height: calc(100% - 38.45px);
 }
+
 /* 텍스트영역 */
 .text-area {
   border: 0;
@@ -211,8 +225,7 @@ iframe {
 }
 
 /* grid-stack */
-.grid-item-header {
-}
+
 .grid-stack-item {
   background: transparent;
 }
@@ -223,8 +236,42 @@ iframe {
   overflow-y: visible !important;
 }
 .grid-item-header {
-  cursor: crosshair;
+  cursor: move;
+  display: flex;
+  justify-content: space-between;
 }
 .CodeMirror {
   width: 100%;
+  height: 100% !important;
+}
+.grid-item-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tabby */
+#tabs {
+  padding: 0.24rem;
+  font-size: 12px;
+}
+#tabs li a {
+  color: rgb(165, 165, 165);
+  font-weight: 600;
+}
+
+@media (min-width: 30em) {
+  [role="tab"] {
+    border-radius: 4px;
+  }
+}
+
+@media (min-width: 30em) {
+  [role="tab"][aria-selected="true"] {
+    color: rgb(43, 43, 43) !important;
+    border-bottom: 1px solid lightgray;
+  }
+}
+
+[role="tab"] {
+  padding: 0.5em 0.75em;
 }
